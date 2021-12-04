@@ -38,8 +38,8 @@ developement cycle.
 * **Memo for me**. Try to implement the test circuits in such a way that they are as much as possible independent but they go forming part of a larger circuit that contains all them. This way it will be necessary to have only one breadboard and not to redo the wiring every time we want to test a new feature.
 
 ### Testing GPIO out 
-* TODO. Schematics & test code 
-
+* First exaple. Turn on and off a digital output pin. As an application turn on and off a led.  
+<img src="https://github.com/nmingotti/Cuis-Smalltalk-BeagleBoard/blob/main/docs/img/circuit-gpio-out-2.jpg" width="50%" alt="gpio-out-1">
 
 
 
