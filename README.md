@@ -5,13 +5,13 @@ A package to control BeagleBone pins in Smalltalk
 
 ##    Objectives, Plan & Status
 This package is started 27-Nov-2021 with zero existing code. The long term plan is to implement this:
-* Controle on board leds 
-* Control GPIO input and output
-* Control PWM 
-* Control A/D converter
-* Interrupts
-* I2C
-* UART 
+*     Controle on board leds 
+*     Control GPIO input and output
+*     Control PWM 
+*     Control A/D converter
+*     Interrupts
+*     I2C
+*     UART 
 * (difficult) Interface to the 2 separate computation units for real time processing
 * (fun) Make morphs to control graphicall the pin statuses
 * **Memo for me**. At the beginning offload all what is possible to shell commands. This will be extremely inefficient but permit me to try the programmer interface with the least effort.
