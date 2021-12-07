@@ -1,7 +1,9 @@
-# Cuis-Smalltalk-BeagleBoard
+Prova 
+
+#     Cuis-Smalltalk-BeagleBoard
 A package to control BeagleBone pins in Smalltalk 
 
-## Objectives, Plan & Status
+##    Objectives, Plan & Status
 This package is started 27-Nov-2021 with zero existing code. The long term plan is to implement this:
 * Controle on board leds 
 * Control GPIO input and output
