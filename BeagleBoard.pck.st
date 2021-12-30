@@ -1,52 +1,83 @@
-'From Cuis 5.0 [latest update: #4885] on 5 December 2021 at 6:00:46 pm'!
+'From Cuis 5.0 [latest update: #4885] on 30 December 2021 at 5:29:21 am'!
 'Description '!
-!provides: 'BeagleBoard' 1 11!
+!provides: 'BeagleBoard' 1 13!
 !requires: 'Cuis-Base' 50 4885 nil!
 !requires: 'CommandShell' 1 2 nil!
 !requires: 'Regex' 1 5 nil!
 !requires: 'OSProcess' 1 17 nil!
-SystemOrganization addCategory: 'BeagleBoard-Examples'!
-SystemOrganization addCategory: 'BeagleBoard'!
+SystemOrganization addCategory: #BeagleBoard!
+SystemOrganization addCategory: #'BeagleBoard-BB-AI'!
+SystemOrganization addCategory: #'BeagleBoard-Examples'!
 
 
-!classDefinition: #BBExamples category: 'BeagleBoard-Examples'!
-Object subclass: #BBExamples
-	instanceVariableNames: ''
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'BeagleBoard-Examples'!
-!classDefinition: 'BBExamples class' category: 'BeagleBoard-Examples'!
-BBExamples class
-	instanceVariableNames: ''!
-
-!classDefinition: #Pin category: 'BeagleBoard'!
+!classDefinition: #Pin category: #BeagleBoard!
 Object subclass: #Pin
 	instanceVariableNames: 'header position'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'BeagleBoard'!
-!classDefinition: 'Pin class' category: 'BeagleBoard'!
+!classDefinition: 'Pin class' category: #BeagleBoard!
 Pin class
 	instanceVariableNames: ''!
 
-!classDefinition: #Gpio category: 'BeagleBoard'!
+!classDefinition: #Gpio category: #BeagleBoard!
 Pin subclass: #Gpio
 	instanceVariableNames: 'sysfsDirectory'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'BeagleBoard'!
-!classDefinition: 'Gpio class' category: 'BeagleBoard'!
+!classDefinition: 'Gpio class' category: #BeagleBoard!
 Gpio class
 	instanceVariableNames: ''!
 
-!classDefinition: #GpioOut category: 'BeagleBoard'!
+!classDefinition: #GpioOut category: #BeagleBoard!
 Gpio subclass: #GpioOut
 	instanceVariableNames: 'pull status'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'BeagleBoard'!
-!classDefinition: 'GpioOut class' category: 'BeagleBoard'!
+!classDefinition: 'GpioOut class' category: #BeagleBoard!
 GpioOut class
+	instanceVariableNames: ''!
+
+!classDefinition: #PWM category: #'BeagleBoard-BB-AI'!
+Object subclass: #PWM
+	instanceVariableNames: 'sysfsDir enableFile periodFile dutyCycleFile'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'BeagleBoard-BB-AI'!
+!classDefinition: 'PWM class' category: #'BeagleBoard-BB-AI'!
+PWM class
+	instanceVariableNames: ''!
+
+!classDefinition: #FanCape category: #'BeagleBoard-BB-AI'!
+PWM subclass: #FanCape
+	instanceVariableNames: ''
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'BeagleBoard-BB-AI'!
+!classDefinition: 'FanCape class' category: #'BeagleBoard-BB-AI'!
+FanCape class
+	instanceVariableNames: ''!
+
+!classDefinition: #Temperature category: #'BeagleBoard-BB-AI'!
+Object subclass: #Temperature
+	instanceVariableNames: ''
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'BeagleBoard-BB-AI'!
+!classDefinition: 'Temperature class' category: #'BeagleBoard-BB-AI'!
+Temperature class
+	instanceVariableNames: ''!
+
+!classDefinition: #BBExamples category: #'BeagleBoard-Examples'!
+Object subclass: #BBExamples
+	instanceVariableNames: ''
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'BeagleBoard-Examples'!
+!classDefinition: 'BBExamples class' category: #'BeagleBoard-Examples'!
+BBExamples class
 	instanceVariableNames: ''!
 
 
@@ -83,25 +114,15 @@ go1 off           " set my status to LOW voltage "
 
 !
 
+!FanCape commentStamp: '<historical>' prior: 0!
+This are my setting for the fan cape where i have defined a few useful parameters to make it not loud if not necessary.
+!
+
 !Pin methodsFor: 'as yet unclassified' stamp: 'NM 12/5/2021 15:37:23'!
 name
 	". Return the pin name, e.g. P9_11. It means header 9 and position 11 over that header . 
 	. This is the standard way of naming pings in the BeagleBoard. There exists other format as  'P9.11', 'p9_11' etc. "
 	^ 'P{1}_{2}' format: {header. position.}.! !
-
-!BBExamples methodsFor: 'examples' stamp: 'NM 12/5/2021 17:43:30'!
-exGpioOut1
-	".  Copy these lines in the Workspace and run them by hand one by one checking the results.
-	. set a pin as output pin, default 'off', implied pullDown resistor parameter "
-	|go1|
-	go1 _ GpioOut newAtHeader: 9 position: 11 pull: #down.
-	" . read the pin status "
-	go1 status. 
-	". toggle the pin value, "
-	go1 on. 
-	go1 off. 
-	go1 on.
-	go1 off. ! !
 
 !Gpio methodsFor: 'accessing' stamp: 'NM 12/5/2021 16:32:24'!
 sysfsDirectory
@@ -206,3 +227,72 @@ newAtHeader: anInt1 position: anInt2 pull: aSymbol
 	 otherwise in 'on' state.
 	"
 	^ self basicNew initializeAtHeader: anInt1 position: anInt2 pull: aSymbol  ! !
+
+!PWM methodsFor: 'as yet unclassified' stamp: 'NM 12/30/2021 04:42:12'!
+disable
+	". disable the PWM unit "
+	enableFile appendStreamDo: [ :str | str nextPut: $0 ]. 
+	! !
+
+!PWM methodsFor: 'as yet unclassified' stamp: 'NM 12/30/2021 05:12:20'!
+dutyCycleNS
+	". returns the time duration of the duty cycle in nano seconds. 
+	. this value must be always inferion to the value in 'periodNS' for things to make sense. "
+	^ dutyCycleFile fileContents asNumber ! !
+
+!PWM methodsFor: 'as yet unclassified' stamp: 'NM 12/30/2021 04:42:37'!
+enable
+	". disable the PWM unit "
+	enableFile appendStreamDo: [ :str | str nextPut: $1 ]. 
+	! !
+
+!PWM methodsFor: 'as yet unclassified' stamp: 'NM 12/30/2021 04:39:46'!
+initializeAt: dirName
+	". initialize the PWM at known values of period and duty cycle, by default it is in disabled state "
+	sysfsDir _ dirName asDirectoryEntry .
+	periodFile _ sysfsDir // 'period'  . 
+	dutyCycleFile _  sysfsDir  // 'duty_cycle' .  
+	enableFile _ sysfsDir // 'enable' . 
+	
+	! !
+
+!PWM methodsFor: 'as yet unclassified' stamp: 'NM 12/30/2021 05:11:09'!
+periodNS
+	". returns the time duration of a single period of the pwm in nano seconds "
+	^ periodFile fileContents asNumber ! !
+
+!PWM methodsFor: 'as yet unclassified' stamp: 'NM 12/30/2021 04:47:49'!
+reset
+	". disable the PWM unit , then duty cycle to zero, and period to 1_000 nano-seconds. It can't be 0."
+	self disable.
+	dutyCycleFile appendStreamDo: [ :str | str nextPutAll: '0' ].
+	periodFile appendStreamDo: [ :str | str nextPutAll: '1000' ].	 
+	! !
+
+!PWM class methodsFor: 'as yet unclassified' stamp: 'NM 12/30/2021 04:32:36'!
+newAt: dirName
+	"Open a new PWM which is referenced by sysfs at the directory 'dirName' 
+	. dirName : String . example: '/dev/pwm/ehrpwm1a '
+	"
+	^ self basicNew initializeAt: dirName
+	! !
+
+!Temperature class methodsFor: 'position' stamp: 'NM 12/30/2021 05:00:22'!
+zone1
+	". Return a decimal value in Celsius degree  
+	. the temperature of this area must not surpass 85C or the BB-AI will shut down " 
+	^ '/sys/devices/virtual/thermal/thermal_zone1/temp' asFileEntry fileContents asNumber  / 1000.0 . ! !
+
+!BBExamples methodsFor: 'examples' stamp: 'NM 12/5/2021 17:43:30'!
+exGpioOut1
+	".  Copy these lines in the Workspace and run them by hand one by one checking the results.
+	. set a pin as output pin, default 'off', implied pullDown resistor parameter "
+	|go1|
+	go1 _ GpioOut newAtHeader: 9 position: 11 pull: #down.
+	" . read the pin status "
+	go1 status. 
+	". toggle the pin value, "
+	go1 on. 
+	go1 off. 
+	go1 on.
+	go1 off. ! !
