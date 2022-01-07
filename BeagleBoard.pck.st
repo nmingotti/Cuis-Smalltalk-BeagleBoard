@@ -1,6 +1,6 @@
-'From Cuis 5.0 [latest update: #4885] on 30 December 2021 at 5:29:21 am'!
+'From Cuis 5.0 [latest update: #4885] on 8 January 2022 at 12:26:20 am'!
 'Description '!
-!provides: 'BeagleBoard' 1 13!
+!provides: 'BeagleBoard' 1 14!
 !requires: 'Cuis-Base' 50 4885 nil!
 !requires: 'CommandShell' 1 2 nil!
 !requires: 'Regex' 1 5 nil!
@@ -9,6 +9,16 @@ SystemOrganization addCategory: #BeagleBoard!
 SystemOrganization addCategory: #'BeagleBoard-BB-AI'!
 SystemOrganization addCategory: #'BeagleBoard-Examples'!
 
+
+!classDefinition: #BB_README category: #BeagleBoard!
+Object subclass: #BB_README
+	instanceVariableNames: ''
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'BeagleBoard'!
+!classDefinition: 'BB_README class' category: #BeagleBoard!
+BB_README class
+	instanceVariableNames: ''!
 
 !classDefinition: #Pin category: #BeagleBoard!
 Object subclass: #Pin
@@ -42,7 +52,7 @@ GpioOut class
 
 !classDefinition: #PWM category: #'BeagleBoard-BB-AI'!
 Object subclass: #PWM
-	instanceVariableNames: 'sysfsDir enableFile periodFile dutyCycleFile'
+	instanceVariableNames: 'sysfsDir enableFile periodFile dutyCycleFile defaultDutyCycle'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'BeagleBoard-BB-AI'!
@@ -82,11 +92,7 @@ BBExamples class
 
 
 !Pin commentStamp: '<historical>' prior: 0!
-I am a physical pin into on the BeagleBoard. I can't do much, my subblasses to all the work.
-=== iVars ======
-. header : String 
-. position : String 
-=============
+Documentation placeholder 
 !
 
 !Gpio commentStamp: '<historical>' prior: 0!
@@ -114,6 +120,21 @@ go1 off           " set my status to LOW voltage "
 
 !
 
+!PWM commentStamp: '<historical>' prior: 0!
+. A pwm pin is configured setting the value of 3 files in a specific directory
+. The files are: enable, period, duty_cycle
+. When universal_cape is not present the PWM must be set via overlays in /boot/uEnv.txt
+. When the machine boots enable, perdio, and duty_cycle all contain the value '0'
+--- Variables -------
+sysfsDir --- DirectoryEntry --- directory of sysfs where we can control the PWM 
+enableFile --- FileEntry  --- file 'enable'
+periodFile --- FileEntry --- 
+dutyCycleFile --- FileEntry ---
+defaultDutyCycle --- Number --- value between 0 and 1, represent the default ratio duty/period when 
+                                                   we set the PWM as a frequency and we don't specify the dutyCycle. 
+                                                   by default this will be set to 0.5. 
+---------------------------------------!
+
 !FanCape commentStamp: '<historical>' prior: 0!
 This are my setting for the fan cape where i have defined a few useful parameters to make it not loud if not necessary.
 !
@@ -123,6 +144,23 @@ name
 	". Return the pin name, e.g. P9_11. It means header 9 and position 11 over that header . 
 	. This is the standard way of naming pings in the BeagleBoard. There exists other format as  'P9.11', 'p9_11' etc. "
 	^ 'P{1}_{2}' format: {header. position.}.! !
+
+!BB_README methodsFor: 'as yet unclassified' stamp: 'NM 1/8/2022 00:11:31'!
+bbREADME
+
+"
+======  **IMPORTANT**. Writing to sysfs files.  ===============
+. To control devices we use Linux files in sysfs, for example /dev/pww/ehrxxx/period 
+. These files can not be deleted  => forceWriteStreamDo will not work
+. There files are supposed to receive ASCII, not UTF-8, this in Python3 implies we need to
+  write in 'binary' mode, in Cuis we can write in text mode since text here means Latin1. 
+. The metod i found to write in these files is 'appendStreamDo', no newline is required, just write in the value
+.===============================================
+
+
+
+
+"! !
 
 !Gpio methodsFor: 'accessing' stamp: 'NM 12/5/2021 16:32:24'!
 sysfsDirectory
@@ -228,38 +266,74 @@ newAtHeader: anInt1 position: anInt2 pull: aSymbol
 	"
 	^ self basicNew initializeAtHeader: anInt1 position: anInt2 pull: aSymbol  ! !
 
+!PWM methodsFor: 'examples' stamp: 'NM 1/8/2022 00:26:06'!
+example1
+	"
+	. TODO: check it works after system reboot 
+	. TODO: check if the dutyCycle stend for the high part of the curve (seems the contrary now)
+	. create a PWM pin and control it 
+	"
+	|p19|
+	 p19 _ PWM newAt: '/dev/pwm/ehrpwm2a' .
+
+	p19 getPeriodInNanoSec . 
+	p19 getDutyCycleInNanoSec  . 
+
+	p19 setFrequency: 2. 
+
+	p19 enable. 
+
+	p19 setFrequency: 5. 
+
+	p19 setFrequency: 100.
+
+	p19 setFrequency: 440.
+
+	p19 disable. 
+	
+! !
+
 !PWM methodsFor: 'as yet unclassified' stamp: 'NM 12/30/2021 04:42:12'!
 disable
 	". disable the PWM unit "
 	enableFile appendStreamDo: [ :str | str nextPut: $0 ]. 
 	! !
 
-!PWM methodsFor: 'as yet unclassified' stamp: 'NM 12/30/2021 05:12:20'!
-dutyCycleNS
+!PWM methodsFor: 'as yet unclassified' stamp: 'NM 1/7/2022 23:27:20'!
+enable
+	". enable the PWM unit "
+	enableFile appendStreamDo: [ :str | str nextPut: $1 ]. 
+	! !
+
+!PWM methodsFor: 'as yet unclassified' stamp: 'NM 1/7/2022 23:35:30'!
+getDutyCycleAsPercent
+	". return the duty cycle expressed as a percent value of the period. "
+	^ (self getDutyCycleInNanoSec  / self getPeriodInNanoSec ) * 100.0 ! !
+
+!PWM methodsFor: 'as yet unclassified' stamp: 'NM 1/7/2022 23:33:28'!
+getDutyCycleInNanoSec
 	". returns the time duration of the duty cycle in nano seconds. 
 	. this value must be always inferion to the value in 'periodNS' for things to make sense. "
 	^ dutyCycleFile fileContents asNumber ! !
 
-!PWM methodsFor: 'as yet unclassified' stamp: 'NM 12/30/2021 04:42:37'!
-enable
-	". disable the PWM unit "
-	enableFile appendStreamDo: [ :str | str nextPut: $1 ]. 
-	! !
+!PWM methodsFor: 'as yet unclassified' stamp: 'NM 1/7/2022 23:33:55'!
+getPeriodInNanoSec
+	". returns the time duration of a single period of the pwm in nano seconds "
+	^ periodFile fileContents asNumber ! !
 
-!PWM methodsFor: 'as yet unclassified' stamp: 'NM 12/30/2021 04:39:46'!
+!PWM methodsFor: 'as yet unclassified' stamp: 'NM 1/7/2022 23:48:27'!
 initializeAt: dirName
-	". initialize the PWM at known values of period and duty cycle, by default it is in disabled state "
+	". TODO: check the directory name esits and the file that must be there, if not, raise exception  
+	. initialize the PWM at known values of period and duty cycle, by default it is in disabled state "
 	sysfsDir _ dirName asDirectoryEntry .
 	periodFile _ sysfsDir // 'period'  . 
 	dutyCycleFile _  sysfsDir  // 'duty_cycle' .  
 	enableFile _ sysfsDir // 'enable' . 
+	". by default the duty cycle is 0.5 "
+	defaultDutyCycle _ 0.5. 
+	
 	
 	! !
-
-!PWM methodsFor: 'as yet unclassified' stamp: 'NM 12/30/2021 05:11:09'!
-periodNS
-	". returns the time duration of a single period of the pwm in nano seconds "
-	^ periodFile fileContents asNumber ! !
 
 !PWM methodsFor: 'as yet unclassified' stamp: 'NM 12/30/2021 04:47:49'!
 reset
@@ -268,6 +342,101 @@ reset
 	dutyCycleFile appendStreamDo: [ :str | str nextPutAll: '0' ].
 	periodFile appendStreamDo: [ :str | str nextPutAll: '1000' ].	 
 	! !
+
+!PWM methodsFor: 'as yet unclassified' stamp: 'NM 1/8/2022 00:12:47'!
+setDutyCycleInNanoSec: aNumber
+	dutyCycleFile appendStreamDo: [ :str | str nextPutAll: (aNumber asString) ] . 
+	
+	
+	! !
+
+!PWM methodsFor: 'as yet unclassified' stamp: 'NM 1/8/2022 00:20:54'!
+setFrequency: aNumberHz 
+	".  This command sets the the frequency at a given Hz
+	. accepted values (as of today) are > 1.1   
+	"
+	|periodNS dutyNS|
+	". set to zero the dutyCycle so we can manuver on the period " 
+	self setDutyCycleInNanoSec: 0.
+	". compute values to be set  "  
+	periodNS _ ( (1.0  / aNumberHz) * 1e9 )asInteger . 
+	dutyNS _ (periodNS * defaultDutyCycle ) asInteger . 
+	". set the values " 
+	self setPeriodInNanoSec: periodNS . 
+	self setDutyCycleInNanoSec: dutyNS . ! !
+
+!PWM methodsFor: 'as yet unclassified' stamp: 'NM 1/8/2022 00:12:23'!
+setPeriodInNanoSec: aNumber
+	periodFile appendStreamDo: [ :str | str nextPutAll: (aNumber asString) ] . 
+	
+	
+	! !
+
+!PWM methodsFor: 'as yet unclassified' stamp: 'NM 1/7/2022 23:30:42'!
+status
+	". check the status of the PWM, can return #on or #off "
+	^ nil 
+	! !
+
+!PWM methodsFor: 'accessing' stamp: 'NM 1/7/2022 23:51:06'!
+defaultDutyCycle
+	"Answer the value of defaultDutyCycle"
+
+	^ defaultDutyCycle! !
+
+!PWM methodsFor: 'accessing' stamp: 'NM 1/7/2022 23:51:06'!
+defaultDutyCycle: anObject
+	"Set the value of defaultDutyCycle"
+
+	defaultDutyCycle _ anObject! !
+
+!PWM methodsFor: 'accessing' stamp: 'NM 1/7/2022 23:51:06'!
+dutyCycleFile
+	"Answer the value of dutyCycleFile"
+
+	^ dutyCycleFile! !
+
+!PWM methodsFor: 'accessing' stamp: 'NM 1/7/2022 23:51:06'!
+dutyCycleFile: anObject
+	"Set the value of dutyCycleFile"
+
+	dutyCycleFile _ anObject! !
+
+!PWM methodsFor: 'accessing' stamp: 'NM 1/7/2022 23:51:06'!
+enableFile
+	"Answer the value of enableFile"
+
+	^ enableFile! !
+
+!PWM methodsFor: 'accessing' stamp: 'NM 1/7/2022 23:51:06'!
+enableFile: anObject
+	"Set the value of enableFile"
+
+	enableFile _ anObject! !
+
+!PWM methodsFor: 'accessing' stamp: 'NM 1/7/2022 23:51:06'!
+periodFile
+	"Answer the value of periodFile"
+
+	^ periodFile! !
+
+!PWM methodsFor: 'accessing' stamp: 'NM 1/7/2022 23:51:06'!
+periodFile: anObject
+	"Set the value of periodFile"
+
+	periodFile _ anObject! !
+
+!PWM methodsFor: 'accessing' stamp: 'NM 1/7/2022 23:51:06'!
+sysfsDir
+	"Answer the value of sysfsDir"
+
+	^ sysfsDir! !
+
+!PWM methodsFor: 'accessing' stamp: 'NM 1/7/2022 23:51:06'!
+sysfsDir: anObject
+	"Set the value of sysfsDir"
+
+	sysfsDir _ anObject! !
 
 !PWM class methodsFor: 'as yet unclassified' stamp: 'NM 12/30/2021 04:32:36'!
 newAt: dirName
