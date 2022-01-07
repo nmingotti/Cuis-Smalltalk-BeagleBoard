@@ -1,7 +1,8 @@
-# Cuis-Smalltalk-BeagleBoard
+
+#  Cuis-Smalltalk-BeagleBoard
 A package to control BeagleBone pins in Smalltalk 
 
-## Objectives, Plan & Status
+##    Objectives, Plan & Status
 This package is started 27-Nov-2021 with zero existing code. The long term plan is to implement this:
 * Controle on board leds 
 * Control GPIO input and output
@@ -40,6 +41,7 @@ developement cycle.
 ### Testing GPIO out 
 * First exaple. Turn on and off a digital output pin. As an application turn on and off a led.  
 <img src="https://github.com/nmingotti/Cuis-Smalltalk-BeagleBoard/blob/main/docs/img/circuit-gpio-out-2.jpg" width="50%" alt="gpio-out-1">
+
 
 
 
